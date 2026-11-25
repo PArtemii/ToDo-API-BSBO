@@ -142,3 +142,5 @@ async def get_task_by_id(task_id: int) -> dict:
         if task["id"] == task_id:
             return task
     raise HTTPException(status_code=404, detail="Задача не найдена")
+
+# Также в коде добавлены эндпоинты статистики, фильтрации по статусу и поиска, исправлен порядок маршрутов
