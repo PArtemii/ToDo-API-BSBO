@@ -1,19 +1,47 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-
-SQLALCHEMY_DATABASE_URL = "sqlite:///./todo.db"
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    AsyncSession,
+    async_sessionmaker,
 )
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from sqlalchemy.orm import DeclarativeBase
+from typing import AsyncGenerator
+import os
+from dotenv import load_dotenv
 
-Base = declarative_base()
+try:
+    from models import Base, Task
+except ImportError:
+    class Base(DeclarativeBase):
+        pass
+
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+engine = create_async_engine(
+    DATABASE_URL,
+    connect_args={"statement_cache_size": 0},
+)
+
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    autoflush=False,
+    expire_on_commit=False,
+)
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def init_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    print("База данных инициализирована!")
+
+
+async def drop_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    print("Все таблицы удалены!")
+
+
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
+        yield session
