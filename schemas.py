@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class TaskBase(BaseModel):
@@ -17,6 +17,9 @@ class TaskBase(BaseModel):
     )
     is_important: bool = Field(..., description="Важность задачи")
     is_urgent: bool = Field(..., description="Срочность задачи")
+    deadline: Optional[datetime] = Field(
+        None, description="Дедлайн задачи"
+    )
 
 
 class TaskCreate(TaskBase):
@@ -33,6 +36,7 @@ class TaskUpdate(BaseModel):
     is_important: Optional[bool] = Field(None, description="Новая важность")
     is_urgent: Optional[bool] = Field(None, description="Новая срочность")
     completed: Optional[bool] = Field(None, description="Статус выполнения")
+    deadline: Optional[datetime] = Field(None, description="Новый дедлайн")
 
 
 class TaskResponse(TaskBase):
@@ -44,6 +48,16 @@ class TaskResponse(TaskBase):
     )
     completed: bool = Field(default=False, description="Статус выполнения задачи")
     created_at: datetime = Field(..., description="Дата и время создания задачи")
+    completed_at: Optional[datetime] = Field(
+        None, description="Дата и время завершения задачи"
+    )
+
+    @computed_field
+    @property
+    def days_until_deadline(self) -> Optional[int]:
+        if self.deadline is None:
+            return None
+        return (self.deadline.date() - datetime.now(timezone.utc).date()).days
 
     class Config:
         from_attributes = True
