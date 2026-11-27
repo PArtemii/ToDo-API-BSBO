@@ -1,7 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
 from sqlalchemy.sql import func
-from datetime import datetime, timezone
-from typing import Optional
 from database import Base
 
 
@@ -19,15 +17,10 @@ class Task(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     completed_at = Column(DateTime(timezone=True), nullable=True)
-    deadline = Column(DateTime(timezone=True), nullable=True)
+    deadline_at = Column(DateTime(timezone=True), nullable=True)
 
     def __repr__(self) -> str:
         return f"<Task(id={self.id}, title='{self.title}', quadrant='{self.quadrant}')>"
-
-    def days_until_deadline(self) -> Optional[int]:
-        if self.deadline is None:
-            return None
-        return (self.deadline.date() - datetime.now(timezone.utc).date()).days
 
     def to_dict(self) -> dict:
         return {
@@ -40,6 +33,5 @@ class Task(Base):
             "completed": self.completed,
             "created_at": self.created_at,
             "completed_at": self.completed_at,
-            "deadline": self.deadline,
-            "days_until_deadline": self.days_until_deadline(),
+            "deadline_at": self.deadline_at,
         }
