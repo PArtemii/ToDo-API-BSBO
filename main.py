@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from database import init_db
-from models import Task  # noqa: F401
-from routers import tasks, stats
+from models import Task, User  # noqa: F401
+from routers import tasks, stats, auth
 from scheduler import start_scheduler
 
 
@@ -25,21 +25,22 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="ToDo лист API",
     description="API для управления задачами с использованием матрицы Эйзенхауэра",
-    version="2.1.0",
+    version="3.0.0",
     contact={"name": "Пугач Артемий Юрьевич"},
     lifespan=lifespan,
 )
 
-app.include_router(tasks.router)
-app.include_router(stats.router)
+app.include_router(auth.router, prefix="/api/v3")
+app.include_router(tasks.router, prefix="/api/v3")
+app.include_router(stats.router, prefix="/api/v3")
 
 
 @app.get("/")
 async def welcome() -> dict:
     return {
-        "message": "Привет, студент!",
-        "api_title": app.title,
-        "api_description": app.description,
-        "api_version": app.version,
-        "api_author": app.contact["name"],
+        "message": "Task Manager API - Управление задачами",
+        "version": app.version,
+        "database": "PostgreSQL (Supabase)",
+        "docs": "/docs",
+        "redoc": "/redoc",
     }
